@@ -1,4 +1,5 @@
 import { React } from 'react';
+import PropTypes from 'prop-types';
 import { AiOutlineSearch } from 'react-icons/ai';
 import {
   Header,
@@ -27,6 +28,10 @@ const Searchbar = ({ onSubmit }) => {
       </SearchForm>
     </Header>
   );
+};
+
+Searchbar.propTypes = {
+  onSubmit: PropTypes.func.isRequired,
 };
 
 export { Searchbar };

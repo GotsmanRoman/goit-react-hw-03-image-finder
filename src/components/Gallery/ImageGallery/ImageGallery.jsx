@@ -1,4 +1,5 @@
 import { React } from 'react';
+import PropTypes from 'prop-types';
 import { ImageGalleryList } from './ImageGallery.module';
 import { ImageGalleryItem } from '../ImageGalleryItem/ImageGalleryItem';
 
@@ -19,6 +20,11 @@ const ImageGallery = ({ array, onClick }) => {
       })}
     </ImageGalleryList>
   );
+};
+
+ImageGallery.propTypes = {
+  array: PropTypes.arrayOf(PropTypes.object).isRequired,
+  onClick: PropTypes.func.isRequired,
 };
 
 export { ImageGallery };
