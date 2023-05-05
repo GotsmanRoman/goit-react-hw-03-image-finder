@@ -8,16 +8,17 @@ import {
   SearchFormInput,
 } from './Searchbar.module';
 
-const Searchbar = () => {
+const Searchbar = ({ onSubmit }) => {
   return (
     <Header>
-      <SearchForm>
+      <SearchForm onSubmit={onSubmit()}>
         <SearchFormButton type="submit">
           <SearchFormButtonLabel></SearchFormButtonLabel>
           <AiOutlineSearch />
         </SearchFormButton>
 
         <SearchFormInput
+          name="search"
           type="text"
           autocomplete="off"
           autoFocus
