@@ -1,4 +1,4 @@
-import { React } from 'react';
+import { Component, React } from 'react';
 import PropTypes from 'prop-types';
 import { AiOutlineSearch } from 'react-icons/ai';
 import {
@@ -9,29 +9,49 @@ import {
   SearchFormInput,
 } from './Searchbar.module';
 
-const Searchbar = ({ onSubmit }) => {
-  return (
-    <Header>
-      <SearchForm onSubmit={onSubmit()}>
-        <SearchFormButton type="submit">
-          <SearchFormButtonLabel></SearchFormButtonLabel>
-          <AiOutlineSearch />
-        </SearchFormButton>
+export class Searchbar extends Component {
+  static propTypes = {
+    onSubmit: PropTypes.func.isRequired,
+  };
 
-        <SearchFormInput
-          name="search"
-          type="text"
-          autocomplete="off"
-          autoFocus
-          placeholder="Search images and photos"
-        />
-      </SearchForm>
-    </Header>
-  );
-};
+  state = {
+    query: '',
+  };
 
-Searchbar.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
-};
+  handleChange = event => {
+    const { name, value } = event.currentTarget;
+    this.setState({ [name]: value });
+  };
+  handleSubmit = event => {
+    event.preventDefault();
 
-export { Searchbar };
+    this.props.onSubmit(this.state);
+    this.resetForm();
+  };
+  resetForm = () => {
+    this.setState({ query: '' });
+  };
+
+  render() {
+    return (
+      <Header>
+        <SearchForm onSubmit={this.handleSubmit}>
+          <SearchFormButton type="submit">
+            <SearchFormButtonLabel></SearchFormButtonLabel>
+            <AiOutlineSearch />
+          </SearchFormButton>
+
+          <SearchFormInput
+            name="query"
+            type="text"
+            autocomplete="off"
+            autoFocus
+            placeholder="Search images and photos"
+            value={this.state.query}
+            onChange={this.handleChange}
+          />
+        </SearchForm>
+      </Header>
+    );
+  }
+}

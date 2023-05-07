@@ -6,9 +6,9 @@ import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Loader } from './Loader/Loader';
 import { Modal } from './Modal/Modal';
 import { Searchbar } from './Searchbar/Searchbar';
+import { fetchAPI } from './utils/API';
 
 import Notiflix from 'notiflix';
-import axios from 'axios';
 
 Notiflix.Notify.init({
   width: '280px',
@@ -16,14 +16,6 @@ Notiflix.Notify.init({
   distance: '100px',
   clickToClose: true,
 });
-function showNotify(valueToFade = '2000') {
-  Notiflix.Notify.info(
-    `We're sorry, but you've reached the end of search results.`,
-    {
-      timeout: valueToFade,
-    }
-  );
-}
 function showError(valueToFade = '2000') {
   Notiflix.Notify.failure(
     'Sorry, there are no images matching your search query. Please try again.',
@@ -38,6 +30,7 @@ export class Gallery extends React.PureComponent {
     array: [],
     query: '',
     page: 1,
+    perPage: 12,
     showModal: false,
     currentElement: null,
     currentLoadedQuantity: 0,
@@ -46,18 +39,16 @@ export class Gallery extends React.PureComponent {
   };
 
   componentDidUpdate(prevProps, prevState) {
-    if (this.state.page !== prevState.page) {
-      this.handleSubmit();
+    if (
+      this.state.page !== prevState.page ||
+      this.state.query !== prevState.query
+    ) {
+      this.getImages();
     }
   }
 
   setCurrentImage = event => {
     this.setState({ currentImage: event.target.src });
-  };
-
-  getDataFromInput = async event => {
-    const form = event.currentTarget;
-    this.setState({ query: form.elements.search.value });
   };
 
   isResponseOk = async response => {
@@ -66,55 +57,45 @@ export class Gallery extends React.PureComponent {
     } else if (response.data.total === 0) {
       showError();
       this.setState({ loading: false });
-      return;
+      return false;
     }
-    this.state.totalResultQuantity = response.data.totalHits;
     return response.data;
-  };
-
-  handleSubmit = async event => {
-    this.setState({ loading: true });
-    if (event) {
-      event.preventDefault();
-      await this.getDataFromInput(event);
-      this.setState({ array: [] });
-      this.setState({ page: 1 });
-    }
-    try {
-      const response = await axios.get('https://pixabay.com/api/?', {
-        params: {
-          key: '33277112-6a7c7acf3741d1ff176c90aa7',
-          q: this.state.query,
-          image_type: 'photo',
-          orientation: 'horizontal',
-          safesearch: true,
-          per_page: 12,
-          page: this.state.page,
-        },
-      });
-      const responseParsed = await this.isResponseOk(response);
-
-      if (responseParsed) {
-        this.setState({ loading: false });
-        this.setState(prevState => ({
-          array: [...prevState.array, ...responseParsed.hits],
-        }));
-        this.setState(prevState => ({
-          currentLoadedQuantity:
-            prevState.currentLoadedQuantity + responseParsed.hits.length,
-        }));
-        return responseParsed;
-      }
-    } catch {
-      console.log('Error');
-      showNotify();
-    }
   };
 
   handleMore = async () => {
     this.setState(prevState => ({
       page: prevState.page + 1,
     }));
+  };
+  handlerFormSubmit = ({ query }) => {
+    this.setState({
+      query: query,
+      array: [],
+      page: 1,
+      loading: false,
+      currentLoadedQuantity: 0,
+    });
+  };
+  getImages = async () => {
+    this.setState({ loading: true });
+    const resultAPI = await fetchAPI(
+      this.state.query,
+      this.state.page,
+      this.state.perPage
+    );
+
+    const responseParsed = await this.isResponseOk(resultAPI);
+    if (responseParsed !== false) {
+      this.setState({ loading: false });
+      this.setState(prevState => ({
+        array: [...prevState.array, ...responseParsed.hits],
+      }));
+      this.setState({ totalResultQuantity: responseParsed.totalHits });
+      this.setState(prevState => ({
+        currentLoadedQuantity:
+          prevState.currentLoadedQuantity + responseParsed.hits.length,
+      }));
+    }
   };
 
   toggleModal = (event, currentElement) => {
@@ -134,7 +115,7 @@ export class Gallery extends React.PureComponent {
             currentElement={this.state.currentElement}
           />
         )}
-        <Searchbar onSubmit={() => this.handleSubmit} />
+        <Searchbar onSubmit={this.handlerFormSubmit} />
         <>
           {this.state.loading ? (
             <Loader></Loader>
